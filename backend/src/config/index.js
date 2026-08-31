@@ -14,7 +14,14 @@ const config = {
   mongoUri: process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/khoj',
 
   /** FastAPI ml-service base URL (CV parsing + match scoring live there). */
-  mlServiceUrl: (process.env.ML_SERVICE_URL || 'http://localhost:8000').replace(/\/+$/, ''),
+  mlServiceUrl: (() => {
+    // Render's blueprint `fromService` supplies a bare hostname (no scheme);
+    // accept that and any full URL, and always end up with a scheme so axios
+    // can use it as a baseURL.
+    let url = (process.env.ML_SERVICE_URL || 'http://localhost:8000').trim();
+    if (url && !/^https?:\/\//i.test(url)) url = `https://${url}`;
+    return url.replace(/\/+$/, '');
+  })(),
   mlTimeoutMs: toInt(process.env.ML_TIMEOUT_MS, 30000),
 
   /**

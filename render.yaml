@@ -1,13 +1,13 @@
-# Render Blueprint for Khoj's backend API.
+# Render Blueprint for Khoj: the backend API + the CV-matching ml-service.
 #
 # Deploy: Render dashboard -> New -> Blueprint -> connect bhabinexpert/Khoj.
-# Render reads this file, provisions the service, and prompts you for the two
-# secret values below (the ones marked `sync: false`). Nothing secret lives in
-# the repo.
+# Render reads this file, provisions both services, and prompts you for the
+# secret values marked `sync: false`. Nothing secret lives in the repo.
 #
-# This blueprint covers ONLY the backend (the job feed). CV matching needs the
-# ml-service, which loads a ~2.5 GB model and won't fit Render's free tier — host
-# that separately on a >=4 GB instance and set ML_SERVICE_URL if you want scoring.
+# The ml-service here runs in LEXICAL mode: it installs requirements-lite.txt
+# (no torch), so it fits the free tier and does CV parsing + fuzzy/alias skill
+# matching. For semantic matching, install requirements.txt on a >=2 GB instance
+# and set EMBEDDINGS_ENABLED=true — no code change.
 services:
   - type: web
     name: khoj-backend
@@ -33,3 +33,35 @@ services:
       # it, e.g. https://your-site.netlify.app. Start with * if unsure.
       - key: CORS_ORIGINS
         sync: false
+      # Auto-wired to the ml-service below when the blueprint syncs. Render
+      # supplies the bare hostname; the backend prepends https:// itself. If you
+      # ever host the ml-service elsewhere, override this with a full URL.
+      - key: ML_SERVICE_URL
+        fromService:
+          type: web
+          name: khoj-ml
+          property: host
+      # A cold free-tier ml-service can take longer than the 30s default to
+      # answer its first request; give it room before the UI shows its graceful
+      # "CV matching is temporarily unavailable" notice.
+      - key: ML_TIMEOUT_MS
+        value: "45000"
+
+  - type: web
+    name: khoj-ml
+    runtime: python
+    rootDir: ml-service
+    plan: free
+    # Lean install (no torch) so the build and memory fit the free tier.
+    buildCommand: pip install -r requirements-lite.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    # /health is a real liveness probe — it never loads a model.
+    healthCheckPath: /health
+    autoDeployTrigger: commit
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.12.7"
+      # Force the deterministic lexical matcher. Flip to true only on a >=2 GB
+      # instance running the full requirements.txt (torch) install.
+      - key: EMBEDDINGS_ENABLED
+        value: "false"

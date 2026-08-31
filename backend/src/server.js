@@ -6,30 +6,38 @@ const { connectDb, disconnectDb } = require('./db/connect');
 
 /**
  * Render's free tier spins a web service down after ~15 min with no inbound
- * traffic, and the first request back in eats a ~50s cold start. Pinging our own
+ * traffic, and the first request back in eats a ~50s cold start. Pinging a
  * public /health on an interval counts as inbound traffic, so the idle timer
  * never fires and the service stays warm.
  *
- * The public URL comes from RENDER_EXTERNAL_URL (Render injects it) or an
- * explicit KEEPALIVE_URL; if neither is set (e.g. local dev) we skip it. Default
+ * We keep two things warm: our own service (via RENDER_EXTERNAL_URL, which
+ * Render injects, or an explicit KEEPALIVE_URL) and the ml-service (so the
+ * first CV upload after a quiet spell doesn't eat *its* cold start). Local or
+ * empty targets are skipped — there is nothing to keep warm in dev. Default
  * cadence is 30s, overridable via KEEPALIVE_INTERVAL_MS.
  */
 function startKeepAlive() {
-  const base = (process.env.KEEPALIVE_URL || process.env.RENDER_EXTERNAL_URL || '').replace(/\/+$/, '');
-  if (!base) return;
+  const self = (process.env.KEEPALIVE_URL || process.env.RENDER_EXTERNAL_URL || '').replace(/\/+$/, '');
   const intervalMs = Number(process.env.KEEPALIVE_INTERVAL_MS) || 30000;
-  const url = `${base}/health`;
-  const timer = setInterval(async () => {
-    try {
-      const res = await fetch(url, { signal: AbortSignal.timeout(10000) });
-      if (!res.ok) console.warn(`[keepalive] ${url} -> ${res.status}`);
-    } catch (err) {
-      console.warn(`[keepalive] ping failed: ${err.message}`);
+
+  const targets = [];
+  if (self) targets.push(`${self}/health`);
+  const ml = config.mlServiceUrl;
+  if (ml && !/localhost|127\.0\.0\.1/.test(ml)) targets.push(`${ml}/health`);
+  if (!targets.length) return;
+
+  const timer = setInterval(() => {
+    for (const url of targets) {
+      fetch(url, { signal: AbortSignal.timeout(10000) })
+        .then((res) => {
+          if (!res.ok) console.warn(`[keepalive] ${url} -> ${res.status}`);
+        })
+        .catch((err) => console.warn(`[keepalive] ${url} failed: ${err.message}`));
     }
   }, intervalMs);
   // Never let the heartbeat hold the process open during shutdown.
   timer.unref();
-  console.log(`[keepalive] pinging ${url} every ${intervalMs}ms`);
+  console.log(`[keepalive] pinging ${targets.join(', ')} every ${intervalMs}ms`);
 }
 
 
