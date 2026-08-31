@@ -1,0 +1,198 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+    /* Anchors and "back to top" land below the sticky header, not under it. */
+    scroll-padding-top: 5rem;
+  }
+
+  body {
+    @apply bg-white text-ink-600 antialiased;
+    /* Inter's contextual alternates: a single-storey 'a' and a straight-tailed
+       'l' read as cleaner at UI sizes than the defaults. */
+    font-feature-settings: 'cv02' 1, 'cv03' 1, 'cv04' 1, 'ss03' 1;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    @apply text-ink-900;
+    text-wrap: balance;
+  }
+
+  /* Headline and body copy break better when the last line isn't a widow. */
+  p {
+    text-wrap: pretty;
+  }
+
+  ::selection {
+    @apply bg-brand-600/15 text-ink-900;
+  }
+
+  /* Keyboard users get a visible ring everywhere; mouse users don't. */
+  :focus-visible {
+    @apply outline-none ring-2 ring-brand-600/70 ring-offset-2 ring-offset-white;
+  }
+
+  /* A quiet scrollbar. The default Windows one is the single loudest piece of
+     chrome on the page and undoes a lot of careful spacing. */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: theme('colors.ink.300') transparent;
+  }
+
+  *::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+
+  *::-webkit-scrollbar-thumb {
+    @apply rounded-full border-[3px] border-solid border-transparent bg-ink-300 bg-clip-content;
+  }
+
+  *::-webkit-scrollbar-thumb:hover {
+    @apply bg-ink-400;
+  }
+}
+
+@layer components {
+  /* structure */
+
+  /** The one page gutter. Every full-width section uses it, so edges line up. */
+  .container-page {
+    @apply mx-auto w-full max-w-6xl px-4 sm:px-6;
+  }
+
+  .card {
+    @apply rounded-xl border border-ink-200 bg-white shadow-card;
+  }
+
+  /** A card that responds to the pointer. Transform, not shadow alone — a lift
+      reads as interactive where a shadow change alone reads as an accident. */
+  .card-interactive {
+    @apply card transition-all duration-200 hover:-translate-y-0.5 hover:border-ink-300 hover:shadow-lift;
+  }
+
+  /** Section eyebrow: the small uppercase line above a heading. */
+  .eyebrow {
+    @apply text-[0.6875rem] font-semibold uppercase tracking-[0.12em] text-ink-400;
+  }
+
+  /* buttons */
+
+  .btn {
+    @apply inline-flex select-none items-center justify-center gap-2 whitespace-nowrap rounded-lg px-4 py-2.5
+           text-sm font-semibold leading-none transition-all duration-150
+           disabled:pointer-events-none disabled:opacity-45;
+  }
+
+  /** The primary action. One per view, ideally. */
+  .btn-primary {
+    @apply btn bg-brand-600 text-white shadow-xs hover:bg-brand-700 active:translate-y-px;
+  }
+
+  .btn-secondary {
+    @apply btn border border-ink-200 bg-white text-ink-700 shadow-xs
+           hover:border-ink-300 hover:bg-ink-50 hover:text-ink-900 active:translate-y-px;
+  }
+
+  .btn-ghost {
+    @apply btn text-ink-600 hover:bg-ink-100 hover:text-ink-900;
+  }
+
+  /** Dark, for a call to action sitting on a light surface. */
+  .btn-ink {
+    @apply btn bg-ink-900 text-white shadow-xs hover:bg-ink-800 active:translate-y-px;
+  }
+
+  .btn-sm {
+    @apply px-3 py-2 text-xs;
+  }
+
+  .btn-lg {
+    @apply px-5 py-3 text-[0.9375rem];
+  }
+
+  /** A square target for a lone icon — keeps the 40px hit area a button needs. */
+  .btn-icon {
+    @apply inline-flex h-9 w-9 items-center justify-center rounded-lg text-ink-500
+           transition-colors hover:bg-ink-100 hover:text-ink-900;
+  }
+
+  /* forms */
+
+  .field {
+    @apply w-full rounded-lg border border-ink-200 bg-white px-3 py-2.5 text-sm text-ink-800 shadow-xs
+           transition-shadow placeholder:text-ink-400
+           focus:border-brand-500 focus:shadow-ring-brand focus:outline-none focus:ring-0;
+  }
+
+  .field-sm {
+    @apply px-2.5 py-2 text-xs;
+  }
+
+  .label {
+    @apply mb-1.5 block text-[0.6875rem] font-semibold uppercase tracking-[0.08em] text-ink-500;
+  }
+
+  .hint {
+    @apply mt-1 text-xs leading-relaxed text-ink-400;
+  }
+
+  /** Checkboxes, sized and coloured once so every filter row matches. */
+  .checkbox {
+    @apply h-4 w-4 shrink-0 cursor-pointer rounded border-ink-300 text-brand-600
+           focus:ring-brand-500 focus:ring-offset-0;
+  }
+
+  /* chips */
+
+  .chip {
+    @apply inline-flex items-center gap-1 rounded-md px-2 py-1 text-[0.6875rem] font-semibold
+           leading-none tracking-wide;
+  }
+
+  .chip-outline {
+    @apply chip border border-ink-200 bg-white text-ink-600;
+  }
+
+  /** A pill, for counts and status rather than categories. */
+  .chip-pill {
+    @apply inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[0.6875rem] font-semibold leading-none;
+  }
+
+  /* misc */
+
+  .link {
+    @apply font-semibold text-brand-700 underline-offset-2 transition-colors hover:text-brand-800 hover:underline;
+  }
+
+  /** Figures line up in a column only if the digits are the same width. */
+  .tabular {
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: 'tnum' 1;
+  }
+
+  .skeleton {
+    @apply animate-pulse rounded bg-ink-100;
+  }
+
+  /** Truncate to N lines without a JS measurement. */
+  .clamp-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .clamp-3 {
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+}

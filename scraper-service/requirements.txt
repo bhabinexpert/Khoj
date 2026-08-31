@@ -1,0 +1,8 @@
+# Khoj scraper service
+requests==2.32.3
+beautifulsoup4==4.12.3
+lxml==5.3.0
+
+# Dev / test
+pytest==8.3.4
+responses==0.25.3

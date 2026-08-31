@@ -1,0 +1,24 @@
+# Khoj scraper schedule (host cron alternative to `run_scrapers.py --loop`).
+#
+# Install with:
+#     crontab /path/to/khoj/scraper-service/crontab
+# or inspect the merged output first:
+#     cd scraper-service && ./.venv/bin/python run_scrapers.py --dry-run --limit 5
+#
+# Every 30 minutes, offset to :07 and :37 — an off-the-hour minute keeps the run
+# from landing on the same instant as every other cron job on the machine, and
+# the scraper itself adds jitter between requests.
+#
+# Adjust BACKEND_URL / paths to match your deployment. Cron runs with a minimal
+# environment, so everything is spelled out explicitly.
+
+SHELL=/bin/sh
+PATH=/usr/local/bin:/usr/bin:/bin
+MAILTO=""
+
+BACKEND_URL=http://localhost:5000
+SCRAPER_MIN_DELAY=3.0
+# Optional: must match the backend's INGEST_TOKEN when that is set.
+INGEST_TOKEN=
+
+7,37 * * * * cd /opt/khoj/scraper-service && ./.venv/bin/python run_scrapers.py >> /var/log/khoj-scraper.log 2>&1

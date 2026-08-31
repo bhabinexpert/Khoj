@@ -1,0 +1,47 @@
+# Netlify config for Khoj's frontend.
+#
+# Netlify hosts ONLY the static React app. The backend (Express + MongoDB),
+# ml-service, and scraper run elsewhere (Render / Railway / Fly). The frontend
+# reaches them over the public internet, so you must set VITE_API_BASE_URL to
+# your backend's public URL — see [build.environment] below.
+
+[build]
+  # Run the build inside the frontend workspace.
+  base = "frontend"
+  command = "npm run build"
+  # Relative to `base`, so this is frontend/dist.
+  publish = "dist"
+
+[build.environment]
+  NODE_VERSION = "22"
+  # Do NOT hardcode the backend URL here. Set it per-site in the Netlify UI
+  # (Site settings -> Environment variables) so it isn't baked into the repo:
+  #
+  #   VITE_API_BASE_URL = https://<your-backend-host>/api
+  #
+  # Vite inlines it at build time. Without it the app calls "/api" on the
+  # Netlify domain, which has no backend, and the feed shows "Could not load
+  # jobs". The backend must also list this Netlify origin in CORS_ORIGINS, or
+  # the browser blocks the cross-origin calls (including the SSE live feed).
+
+# Single-page-app fallback: client routes (/jobs, /jobs/:id, /developer, /match)
+# are served by index.html rather than 404ing on a hard refresh.
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+# Conservative security headers. The bundle carries no secrets (the API is
+# public and there are no accounts), so these are just good hygiene.
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Content-Type-Options = "nosniff"
+    X-Frame-Options = "DENY"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+
+# Long-cache the fingerprinted assets Vite emits; they never change in place.
+[[headers]]
+  for = "/assets/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"

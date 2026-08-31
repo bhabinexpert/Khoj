@@ -1,0 +1,49 @@
+# Dependencies
+node_modules/
+**/node_modules/
+
+# Python
+__pycache__/
+**/__pycache__/
+*.py[cod]
+.venv/
+venv/
+env/
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Builds
+frontend/dist/
+dist/
+build/
+
+# Environment / secrets — never commit real values
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# Test / coverage
+coverage/
+.nyc_output/
+htmlcov/
+.coverage
+
+# Local scraper output
+scraper-service/data/
+*.log
+
+# Editor / OS cruft
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+
+# Scratch artifacts (sample CVs, dumped records)
+ml-service/sample-cv.docx
+ml-service/cv-out.json
+ml-service/cv-record.json

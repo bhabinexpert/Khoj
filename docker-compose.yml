@@ -1,0 +1,82 @@
+# Khoj — full stack for local runs and small single-host deployments.
+#
+#   docker compose up --build
+#
+# Services: mongo (data) -> backend (API) -> ml-service (CV/match) and the
+# frontend (nginx). The scraper is a batch worker that waits for the backend,
+# crawls on a schedule, and posts what it finds to /api/jobs/ingest.
+#
+# Values come from a sibling `.env` (see .env.example). The only one worth
+# setting for a real deployment is INGEST_TOKEN.
+
+services:
+  mongo:
+    image: mongo:7
+    restart: unless-stopped
+    volumes:
+      - mongo-data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping')"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  ml-service:
+    build: ./ml-service
+    restart: unless-stopped
+    # The sentence-transformers model is downloaded on first use and cached here
+    # so a restart does not re-fetch ~2.5 GB.
+    volumes:
+      - model-cache:/home/app/.cache
+    expose:
+      - "8000"
+
+  backend:
+    build: ./backend
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      PORT: "5000"
+      MONGO_URI: ${MONGO_URI:-mongodb://mongo:27017/khoj}
+      ML_SERVICE_URL: ${ML_SERVICE_URL:-http://ml-service:8000}
+      ML_TIMEOUT_MS: ${ML_TIMEOUT_MS:-30000}
+      CORS_ORIGINS: ${CORS_ORIGINS:-*}
+      INGEST_TOKEN: ${INGEST_TOKEN:-}
+      MAX_UPLOAD_BYTES: ${MAX_UPLOAD_BYTES:-5242880}
+    depends_on:
+      mongo:
+        condition: service_healthy
+      ml-service:
+        condition: service_started
+    expose:
+      - "5000"
+
+  frontend:
+    build: ./frontend
+    restart: unless-stopped
+    environment:
+      # nginx proxies /api here; must match the backend service.
+      BACKEND_URL: http://backend:5000
+    depends_on:
+      backend:
+        condition: service_healthy
+    ports:
+      - "${FRONTEND_PORT:-8080}:80"
+
+  scraper:
+    build: ./scraper-service
+    restart: unless-stopped
+    environment:
+      BACKEND_URL: ${BACKEND_URL:-http://backend:5000}
+      SCRAPER_SOURCES: ${SCRAPER_SOURCES:-merojob,jobaxle,kumarijob,froxjob,merorojgari,jobsnepal,rojgari,nepalijob,himalayas,arbeitnow}
+      SCRAPER_MIN_DELAY: ${SCRAPER_MIN_DELAY:-3.0}
+      INGEST_TOKEN: ${INGEST_TOKEN:-}
+    depends_on:
+      backend:
+        condition: service_healthy
+    command: ["python", "run_scrapers.py", "--loop", "--interval-hours", "${SCRAPER_INTERVAL_HOURS:-8}"]
+
+volumes:
+  mongo-data:
+  model-cache:
