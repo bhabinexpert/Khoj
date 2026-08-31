@@ -25,6 +25,7 @@ build/
 !.env.example
 *.pem
 *.key
+DEPLOYMENT.md
 
 # Test / coverage
 coverage/
