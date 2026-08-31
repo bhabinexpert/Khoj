@@ -293,9 +293,9 @@ export default function LandingPage() {
               <Link to="/cv" className="btn-primary btn-lg">
                 Upload my CV <ArrowRightIcon className="h-4 w-4" />
               </Link>
-              <Link to="/developer" className="btn-ghost btn-lg">
+              {/* <Link to="/developer" className="btn-ghost btn-lg">
                 Who built this?
-              </Link>
+              </Link> */}
             </div>
           </GradientBorder>
         </Reveal>

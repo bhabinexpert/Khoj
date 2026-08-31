@@ -92,7 +92,7 @@ export function Layout({ children }) {
               label="My CV"
               badge={hasCv ? <CheckIcon className="h-2.5 w-2.5" /> : null}
             />
-            <Tab to="/developer" icon={<UserIcon className="h-4 w-4" />} label="Developer" />
+            {/* <Tab to="/developer" icon={<UserIcon className="h-4 w-4" />} label="Developer" /> */}
           </nav>
         </div>
       </header>
@@ -122,7 +122,7 @@ export function Layout({ children }) {
             <Link to="/jobs" className="transition-colors hover:text-brand-700">All jobs</Link>
             <Link to="/cv" className="transition-colors hover:text-brand-700">Match my CV</Link>
             <Link to="/saved" className="transition-colors hover:text-brand-700">Saved jobs</Link>
-            <Link to="/developer" className="transition-colors hover:text-brand-700">About the developer</Link>
+            {/* <Link to="/developer" className="transition-colors hover:text-brand-700">About the developer</Link> */}
             <a
               href="https://buymemomo.com/vabin"
               target="_blank"

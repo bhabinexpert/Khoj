@@ -4,6 +4,35 @@ const config = require('./config');
 const { createApp } = require('./app');
 const { connectDb, disconnectDb } = require('./db/connect');
 
+/**
+ * Render's free tier spins a web service down after ~15 min with no inbound
+ * traffic, and the first request back in eats a ~50s cold start. Pinging our own
+ * public /health on an interval counts as inbound traffic, so the idle timer
+ * never fires and the service stays warm.
+ *
+ * The public URL comes from RENDER_EXTERNAL_URL (Render injects it) or an
+ * explicit KEEPALIVE_URL; if neither is set (e.g. local dev) we skip it. Default
+ * cadence is 30s, overridable via KEEPALIVE_INTERVAL_MS.
+ */
+function startKeepAlive() {
+  const base = (process.env.KEEPALIVE_URL || process.env.RENDER_EXTERNAL_URL || '').replace(/\/+$/, '');
+  if (!base) return;
+  const intervalMs = Number(process.env.KEEPALIVE_INTERVAL_MS) || 30000;
+  const url = `${base}/health`;
+  const timer = setInterval(async () => {
+    try {
+      const res = await fetch(url, { signal: AbortSignal.timeout(10000) });
+      if (!res.ok) console.warn(`[keepalive] ${url} -> ${res.status}`);
+    } catch (err) {
+      console.warn(`[keepalive] ping failed: ${err.message}`);
+    }
+  }, intervalMs);
+  // Never let the heartbeat hold the process open during shutdown.
+  timer.unref();
+  console.log(`[keepalive] pinging ${url} every ${intervalMs}ms`);
+}
+
+
 async function start() {
   try {
     await connectDb();
@@ -21,6 +50,7 @@ async function start() {
         `[api] ml-service: ${config.mlServiceUrl}\n` +
         `[api] ingest token: ${config.ingestToken ? 'required' : 'NOT SET — /api/jobs/ingest is open to anyone'}`,
     );
+    startKeepAlive();
   });
 
   const shutdown = async (signal) => {
