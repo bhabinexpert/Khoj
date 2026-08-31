@@ -72,11 +72,19 @@ async function request(path, { method = 'GET', body, signal, formData } = {}) {
   const payload = await readBody(response);
 
   if (!response.ok) {
-    const error = payload?.error || {};
-    throw new ApiError(error.message || `Request failed with status ${response.status}`, {
+    // The backend's error envelope is `{ error: <label>, message, details? }`
+    // (see backend errorHandler). A proxy or an older response may instead nest
+    // `{ error: { message, code, details } }`, so read whichever is present —
+    // otherwise the real message ("The AI service is unavailable…") is lost and
+    // the user only sees "Request failed with status 503".
+    const raw = payload?.error;
+    const nested = raw && typeof raw === 'object' ? raw : null;
+    const message =
+      nested?.message || payload?.message || `Request failed with status ${response.status}`;
+    throw new ApiError(message, {
       status: response.status,
-      code: error.code || 'http_error',
-      details: error.details ?? payload ?? null,
+      code: nested?.code || payload?.code || 'http_error',
+      details: nested?.details ?? payload?.details ?? payload ?? null,
     });
   }
 

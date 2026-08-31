@@ -72,11 +72,25 @@ export default function CVUploadPage() {
       <Dropzone onFile={handleFile} busy={uploading} />
 
       {error ? (
-        <ErrorState
-          error={error}
-          title="Could not read that CV"
-          onRetry={null}
-        />
+        // A 4xx means the file itself was the problem (wrong type, empty, too
+        // big) — that is a real "could not read that CV". A 5xx or a network
+        // failure means the AI service is down, which is not the user's fault
+        // and must not read as one: the feed still works entirely without it.
+        error.status >= 500 || error.status === 0 ? (
+          <Notice tone="warn">
+            <p className="font-semibold">CV matching is temporarily unavailable</p>
+            <p className="mt-0.5 leading-relaxed">
+              The service that reads and scores CVs isn&apos;t responding right now. This
+              doesn&apos;t affect browsing — every job in the feed still works, and you can{' '}
+              <Link to="/jobs" className="font-semibold underline">
+                keep searching
+              </Link>{' '}
+              or try your upload again in a little while.
+            </p>
+          </Notice>
+        ) : (
+          <ErrorState error={error} title="Could not read that CV" onRetry={null} />
+        )
       ) : null}
 
       {hasCv ? (
