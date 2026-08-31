@@ -5,9 +5,9 @@ import {
   CheckIcon,
   CompassIcon,
   DocumentIcon,
+  GithubIcon,
   SearchIcon,
   SparkleIcon,
-  UserIcon,
 } from './Icons.jsx';
 import { MomoSupport } from './MomoSupport.jsx';
 import { useCv } from '../hooks/useCv.js';
@@ -54,9 +54,9 @@ export function Layout({ children }) {
   const { hasCv } = useCv();
   const { count } = useSavedJobs();
   const { pathname } = useLocation();
-  // The landing and developer pages bring their own full-bleed sections; the app
-  // pages want the centred column.
-  const wide = pathname === '/' || pathname === '/developer';
+  // The landing page brings its own full-bleed sections; the app pages want the
+  // centred column.
+  const wide = pathname === '/';
 
   return (
     <div className="flex min-h-screen flex-col">
@@ -92,7 +92,16 @@ export function Layout({ children }) {
               label="My CV"
               badge={hasCv ? <CheckIcon className="h-2.5 w-2.5" /> : null}
             />
-            {/* <Tab to="/developer" icon={<UserIcon className="h-4 w-4" />} label="Developer" /> */}
+            <a
+              href="https://github.com/bhabinexpert"
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="GitHub profile"
+              title="GitHub"
+              className="ml-0.5 inline-flex items-center rounded-lg px-2.5 py-2 text-ink-600 transition-colors hover:bg-ink-100 hover:text-ink-900 sm:px-3"
+            >
+              <GithubIcon className="h-4 w-4" />
+            </a>
           </nav>
         </div>
       </header>

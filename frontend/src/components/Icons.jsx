@@ -13,7 +13,6 @@ import {
   LuGithub,
   LuGlobe,
   LuLayers,
-  LuLinkedin,
   LuMail,
   LuMapPin,
   LuPlus,
@@ -25,7 +24,6 @@ import {
   LuTarget,
   LuTrash2,
   LuUpload,
-  LuUserRound,
   LuWallet,
   LuX,
 } from 'react-icons/lu';
@@ -70,9 +68,7 @@ export const ArrowRightIcon = icon(LuArrowRight, 'h-4 w-4');
 export const PlusIcon = icon(LuPlus, 'h-4 w-4');
 export const RefreshIcon = icon(LuRefreshCw, 'h-4 w-4');
 export const CompassIcon = icon(LuCompass);
-export const UserIcon = icon(LuUserRound);
 export const GithubIcon = icon(LuGithub);
-export const LinkedinIcon = icon(LuLinkedin);
 export const MailIcon = icon(LuMail);
 export const GlobeIcon = icon(LuGlobe);
 export const LayersIcon = icon(LuLayers);

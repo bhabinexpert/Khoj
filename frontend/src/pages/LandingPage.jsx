@@ -293,9 +293,14 @@ export default function LandingPage() {
               <Link to="/cv" className="btn-primary btn-lg">
                 Upload my CV <ArrowRightIcon className="h-4 w-4" />
               </Link>
-              {/* <Link to="/developer" className="btn-ghost btn-lg">
+              <a
+                href="https://bhabindulal.com.np"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="btn-ghost btn-lg"
+              >
                 Who built this?
-              </Link> */}
+              </a>
             </div>
           </GradientBorder>
         </Reveal>
