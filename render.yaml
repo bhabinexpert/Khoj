@@ -17,7 +17,7 @@ services:
     buildCommand: npm ci
     startCommand: node src/server.js
     healthCheckPath: /health
-    autoDeploy: true
+    autoDeployTrigger: commit
     envVars:
       - key: NODE_ENV
         value: production
