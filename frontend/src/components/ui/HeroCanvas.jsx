@@ -12,19 +12,46 @@ import * as THREE from 'three';
  * React.lazy only when the hero is on screen and reduced-motion is off — see
  * HeroScene.jsx. Textures are bundled under /public/hero, so they load
  * same-origin (no CORS) and production never depends on a third-party host.
+ *
+ * The source photos are real, candid phone shots at mixed aspect ratios
+ * (portrait, landscape, one ultra-wide). Each is center-cropped to fill its
+ * square tile — see `coverCrop` — so nothing is stretched and every tile reads
+ * as a consistently framed gallery photo.
  */
 
 const BASE = import.meta.env.BASE_URL || '/';
+// Real, candid photos of Nepali students and makers — building, studying and
+// shipping. Ordered to alternate people-focused and work-focused frames around
+// the ring so no two neighbours look alike as it turns.
 const IMAGES = [
-  'hero/student-1.jpg',
-  'hero/founder-1.jpg',
-  'hero/work-1.jpg',
-  'hero/student-2.jpg',
-  'hero/founder-2.jpg',
-  'hero/work-2.jpg',
-  'hero/student-3.jpg',
-  'hero/founder-3.jpg',
+  'hero/students-team.jpg',   // students building a project together (overhead)
+  'hero/cafe-code.jpg',       // coding over espresso on a rooftop
+  'hero/soldering.jpg',       // soldering a module at the bench
+  'hero/library.jpg',         // reading in the college library
+  'hero/hardware-bench.jpg',  // breadboard + multimeter prototyping
+  'hero/classroom.jpg',       // laptop work in class
+  'hero/breadboards.jpg',     // wiring up breadboards
+  'hero/project-model.jpg',   // the finished smart-home model
 ].map((path) => BASE + path);
+
+/**
+ * Center-crop a texture so it *fills* a square tile without distortion
+ * (CSS `object-fit: cover`, done in UV space). Reads the real image size off
+ * the decoded bitmap, so it is correct for any source aspect ratio.
+ */
+function coverCrop(tex) {
+  const img = tex.image;
+  const aspect = img && img.width && img.height ? img.width / img.height : 1;
+  tex.center.set(0.5, 0.5);
+  if (aspect >= 1) {
+    // Landscape / wide: keep full height, trim the sides.
+    tex.repeat.set(1 / aspect, 1);
+  } else {
+    // Portrait: keep full width, trim top and bottom.
+    tex.repeat.set(1, aspect);
+  }
+  tex.needsUpdate = true;
+}
 
 /** Cursor position in -1..1, tracked at the window so it works even though the
  *  canvas itself is pointer-events:none (it sits behind the hero copy). */
@@ -47,10 +74,13 @@ function PhotoRing({ pointer }) {
   const textures = useLoader(THREE.TextureLoader, IMAGES);
 
   const tiles = useMemo(() => {
-    const radius = 2.9;
+    const radius = 3.1;
     return textures.map((tex, i) => {
       tex.colorSpace = THREE.SRGBColorSpace;
       tex.anisotropy = 8;
+      tex.minFilter = THREE.LinearMipmapLinearFilter;
+      tex.generateMipmaps = true;
+      coverCrop(tex); // fill the square tile, no stretching
       const angle = (i / textures.length) * Math.PI * 2;
       return {
         tex,
@@ -76,9 +106,14 @@ function PhotoRing({ pointer }) {
       <group ref={spin}>
         {tiles.map((tile, i) => (
           <group key={i} position={tile.position} rotation={[0, tile.angle, 0]}>
-            {/* A brand-tinted backing plane reads as a thin frame behind each photo. */}
-            <mesh position={[0, 0, -0.02]}>
-              <planeGeometry args={[1.62, 1.62]} />
+            {/* Gallery-style double mount: a faint brand edge behind a white
+                mat, so mixed candid photos still read as one framed set. */}
+            <mesh position={[0, 0, -0.03]}>
+              <planeGeometry args={[1.68, 1.68]} />
+              <meshBasicMaterial color="#e11d2a" transparent opacity={0.55} />
+            </mesh>
+            <mesh position={[0, 0, -0.015]}>
+              <planeGeometry args={[1.6, 1.6]} />
               <meshBasicMaterial color="#ffffff" />
             </mesh>
             <mesh>
