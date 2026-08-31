@@ -1,0 +1,35 @@
+# Render Blueprint for Khoj's backend API.
+#
+# Deploy: Render dashboard -> New -> Blueprint -> connect bhabinexpert/Khoj.
+# Render reads this file, provisions the service, and prompts you for the two
+# secret values below (the ones marked `sync: false`). Nothing secret lives in
+# the repo.
+#
+# This blueprint covers ONLY the backend (the job feed). CV matching needs the
+# ml-service, which loads a ~2.5 GB model and won't fit Render's free tier — host
+# that separately on a >=4 GB instance and set ML_SERVICE_URL if you want scoring.
+services:
+  - type: web
+    name: khoj-backend
+    runtime: node
+    rootDir: backend
+    plan: free
+    buildCommand: npm ci
+    startCommand: node src/server.js
+    healthCheckPath: /health
+    autoDeploy: true
+    envVars:
+      - key: NODE_ENV
+        value: production
+      # Your MongoDB Atlas string, INCLUDING the /khoj database name. Render
+      # prompts for this on deploy (sync: false = not stored in the repo).
+      - key: MONGO_URI
+        sync: false
+      # Shared secret gating POST /api/jobs/ingest. Render generates a random
+      # value; copy it to wherever the scraper runs so it can post jobs.
+      - key: INGEST_TOKEN
+        generateValue: true
+      # Comma-separated browser origins. Set to your Netlify URL once you have
+      # it, e.g. https://your-site.netlify.app. Start with * if unsure.
+      - key: CORS_ORIGINS
+        sync: false
